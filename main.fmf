@@ -1,0 +1,19 @@
+description: Basic VM manipulation library
+contact: Dalibor Pospíšil <dapospis@redhat.com>
+require:
+  - qemu-kvm
+  - libvirt-daemon-kvm
+  - libvirt-daemon
+  - libvirt-daemon-config-network
+  - /usr/bin/virsh
+  - /usr/bin/virt-install
+  - /usr/bin/unbuffer
+recommend:
+  - library(vm/RHEL)
+  - library(vm/CentOS)
+  - library(vm/Fedora)
+enabled: true
+adjust:
+  - enabled: false
+    when: arch != x86_64
+    continue: false
