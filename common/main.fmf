@@ -1,0 +1,13 @@
+description: Basic VM manipulation library
+require:
+  - qemu-kvm
+  - libvirt-daemon-kvm
+  - libvirt-daemon
+  - libvirt-daemon-config-network
+  - /usr/bin/virsh
+  - /usr/bin/virt-install
+  - /usr/bin/unbuffer
+recommend+:
+  - library(vm/Fedora)
+  - library(vm/CentOS)
+  - library(vm/RHEL)

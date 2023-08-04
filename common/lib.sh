@@ -217,6 +217,10 @@ vmLibraryLoaded() {
     res=1
   fi
 
+  rlRun "rlImport vm/Fedora" 0-255
+  rlRun "rlImport vm/CentOS" 0-255
+  rlRun "rlImport vm/RHEL" 0-255
+
   echo "done."
   return $res
 }
