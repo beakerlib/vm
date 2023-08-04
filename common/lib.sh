@@ -75,7 +75,7 @@ vmGetRepos() {
 
 
 vmGetCurrentRepos() {
-  local section url enabled name
+  local section url enabled name priority
   while read -r line; do
     [[ "$line" =~ ^\[([^]]+)\] ]] && {
       unset url name enabled
@@ -86,7 +86,7 @@ vmGetCurrentRepos() {
       [[ "$line" =~ ^name=(.*)$ ]] && name=${BASH_REMATCH[1]}
       [[ "$line" =~ ^enabled=(.*)$ ]] && enabled=${BASH_REMATCH[1]}
       [[ -n "$url" && -n "$name" && -n "$enabled" ]] && {
-        echo -e "$url   ${section}  ${name}  ${enabled}"
+        echo -e "$url   ${section}  ${name}  -  ${enabled}"
         unset section
       }
     }
@@ -96,18 +96,19 @@ vmGetCurrentRepos() {
 
 vmGenerateRepoFileSection() {
   local number=$(cat $BEAKERLIB_DIR/vmGenerateRepo_number 2>/dev/null)
-  local url section reponame enabled
+  local url section reponame priority enabled
 
-  while read -r url section reponame enabled; do
+  while read -r url section reponame priority enabled; do
     let number++
     [[ -z "$enabled" ]] && enabled=1
+    [[ "$priority" == "-" ]] && priority=''
     echo "[${number}_${section}]
 name=${number}: ${reponame}
 baseurl=$url
 gpgcheck=0
 sslverify=0
 enabled=$enabled
-skip_if_unavailable=1
+skip_if_unavailable=1${priority:+"priority=$priority"$'\n'}
 "
   done
   echo $number > $BEAKERLIB_DIR/vmGenerateRepo_number
@@ -124,7 +125,7 @@ vmPrepareKs() {
 firewall --disabled
 url                          --url="$(echo "$vmRepos" | head -n 1 | cut -d ' ' -f 1)"
 $(echo "$vmRepos" | \
-  while read -r url section reponame enabled; do
+  while read -r url section reponame priority enabled; do
     [[ -z "$enabled" || "$enabled" == "1" || "${enabled,,}" == "true" ]] && echo "repo --name=\"$rel-$reponame\"      --baseurl=$url --cost=100"
   done
 )
