@@ -26,10 +26,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = vm
-#   library-version = 1
+#   library-version = 2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_vm_LIB_NAME="vm/common"
-__INTERNAL_vm_LIB_VERSION=1
+__INTERNAL_vm_LIB_VERSION=2
 
 : <<'=cut'
 =pod
@@ -53,6 +53,17 @@ declare -F rlLogInfo >/dev/null 2>&1 || rlLogInfo() {
   echo "::[  LOG  ]:: $1" >&2
 }
 
+
+vmSetup() {
+  rlRun "rlServiceStart libvirtd"
+  rlRun "rlServiceStart virtlogd"
+}
+
+
+vmCleanup() {
+  rlRun "rlServiceRestore virtlogd"
+  rlRun "rlServiceRestore libvirtd"
+}
 
 vmGetRepos() {
   while read -r line; do
