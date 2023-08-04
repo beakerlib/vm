@@ -108,7 +108,7 @@ baseurl=$url
 gpgcheck=0
 sslverify=0
 enabled=$enabled
-skip_if_unavailable=1${priority:+"priority=$priority"$'\n'}
+skip_if_unavailable=1${priority:+$'\n'"priority=$priority"}
 "
   done
   echo $number > $BEAKERLIB_DIR/vmGenerateRepo_number
