@@ -28,7 +28,7 @@
 #   library-prefix = vm
 #   library-version = 1
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-__INTERNAL_vm_LIB_NAME="VM"
+__INTERNAL_vm_LIB_NAME="vm/common"
 __INTERNAL_vm_LIB_VERSION=1
 
 : <<'=cut'

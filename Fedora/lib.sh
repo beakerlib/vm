@@ -26,7 +26,7 @@
 #   library-prefix = vmFedora
 #   library-version = 1
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-__INTERNAL_vm_LIB_NAME="vmFedora"
+__INTERNAL_vm_LIB_NAME="vm/Fedora"
 __INTERNAL_vm_LIB_VERSION=1
 
 : <<'=cut'

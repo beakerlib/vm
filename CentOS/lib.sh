@@ -26,7 +26,7 @@
 #   library-prefix = vmCentOS
 #   library-version = 1
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-__INTERNAL_vm_LIB_NAME="vmCentOS"
+__INTERNAL_vm_LIB_NAME="vm/CentOS"
 __INTERNAL_vm_LIB_VERSION=1
 
 : <<'=cut'
