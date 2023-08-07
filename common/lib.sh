@@ -167,6 +167,10 @@ EOKS
 
 vmDestroy() {
   virsh destroy "$1"
+}
+
+
+vmRemove() {
   virsh undefine "$1" --remove-all-storage
 }
 
