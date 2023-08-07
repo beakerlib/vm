@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = vmFedora
-#   library-version = 2
+#   library-version = 3
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_vm_LIB_NAME="vm/Fedora"
-__INTERNAL_vm_LIB_VERSION=2
+__INTERNAL_vm_LIB_VERSION=3
 
 : <<'=cut'
 =pod
@@ -54,13 +54,13 @@ vmFedoraGetRepos() {
 
   case $major in
     [0-9]*)
-      ( cat - | sed -r 's/^\s*//;s/\s+/ /g;s/\s*$//' | sed -r 's/(\S+)\s+(\S+)\s+(\S+)/\3 \1 \2/' )<<EOF
+      ( cat - | sed -r 's/^\s*//;s/\s+/ /g;s/\s*$//' | sed -r 's/(\S+)\s+(\S+)\s+(\S+)/\3; \1; \2/' )<<EOF
         fedora-$major          fedora-$major          https://download.fedoraproject.org/pub/fedora/linux/releases/$major/Everything/x86_64/os/
         fedora-$major-updates  fedora-$major-updates  https://download.fedoraproject.org/pub/fedora/linux/updates/$major/Everything/x86_64/
 EOF
       ;;
     rawhide)
-      ( cat - | sed -r 's/^\s*//;s/\s+/ /g;s/\s*$//' | sed -r 's/(\S+)\s+(\S+)\s+(\S+)/\3 \1 \2/' )<<EOF
+      ( cat - | sed -r 's/^\s*//;s/\s+/ /g;s/\s*$//' | sed -r 's/(\S+)\s+(\S+)\s+(\S+)/\3; \1; \2/' )<<EOF
         fedora-rawhide         fedora-rawhide         https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/
 EOF
       ;;

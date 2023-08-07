@@ -26,10 +26,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = vm
-#   library-version = 3
+#   library-version = 5
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_vm_LIB_NAME="vm/common"
-__INTERNAL_vm_LIB_VERSION=3
+__INTERNAL_vm_LIB_VERSION=5
 
 : <<'=cut'
 =pod
@@ -86,7 +86,7 @@ vmGetCurrentRepos() {
       [[ "$line" =~ ^name=(.*)$ ]] && name=${BASH_REMATCH[1]}
       [[ "$line" =~ ^enabled=(.*)$ ]] && enabled=${BASH_REMATCH[1]}
       [[ -n "$url" && -n "$name" && -n "$enabled" ]] && {
-        echo -e "$url   ${section}  ${name}  -  ${enabled}"
+        echo -e "$url;  ${section};  ${name};  ;  ${enabled}"
         unset section
       }
     }
@@ -96,13 +96,19 @@ vmGetCurrentRepos() {
 
 vmGenerateRepoFileSection() {
   local number=$(cat $BEAKERLIB_DIR/vmGenerateRepo_number 2>/dev/null)
-  local url section reponame priority enabled
+  local url section reponame priority enabled line re
 
-  while read -r url section reponame priority enabled; do
-    let number++
-    [[ -z "$enabled" ]] && enabled=1
-    [[ "$priority" == "-" ]] && priority=''
-    echo "[${number}_${section}]
+  while read -r line; do
+    re=$'^\s*([^;]+);\s*([^;]+);\s*([^;]+)(;\s*([^;]*)(;\s*([^;]*))?)?$'
+    [[ "$line" =~ $re ]] && {
+      url="${BASH_REMATCH[1]}"
+      section="${BASH_REMATCH[2]}"
+      reponame="${BASH_REMATCH[3]}"
+      priority="${BASH_REMATCH[5]}"
+      enabled="${BASH_REMATCH[7]}"
+      let number++
+      [[ -z "$enabled" ]] && enabled=1
+      echo "[${number}_${section}]
 name=${number}: ${reponame}
 baseurl=$url
 gpgcheck=0
@@ -110,6 +116,7 @@ sslverify=0
 enabled=$enabled
 skip_if_unavailable=1${priority:+$'\n'"priority=$priority"}
 "
+    }
   done
   echo $number > $BEAKERLIB_DIR/vmGenerateRepo_number
 }
@@ -123,10 +130,19 @@ vmPrepareKs() {
   local ks="$name.ks"
   cat > $ks <<EOKS
 firewall --disabled
-url                          --url="$(echo "$vmRepos" | head -n 1 | cut -d ' ' -f 1)"
+url                          --url="$(echo "$vmRepos" | head -n 1 | cut -d ' ' -f 1 | tr -d ';')"
 $(echo "$vmRepos" | \
-  while read -r url section reponame priority enabled; do
-    [[ -z "$enabled" || "$enabled" == "1" || "${enabled,,}" == "true" ]] && echo "repo --name=\"$rel-$reponame\"      --baseurl=$url --cost=100"
+  while read -r line; do
+    re=$'^\s*([^;]+);\s*([^;]+);\s*([^;]+)(;\s*([^;]+)(;\s*([^;]+))?)?$'
+    [[ "$line" =~ $re ]] && {
+      url="${BASH_REMATCH[1]}"
+      section="${BASH_REMATCH[2]}"
+      reponame=$(echo "${BASH_REMATCH[3]}")
+      priority="${BASH_REMATCH[5]}"
+      enabled="${BASH_REMATCH[7]}"
+      [[ -z "$enabled" || "$enabled" == "1" || "${enabled,,}" == "true" ]] \
+        && echo "repo --name=\"$section\"      --baseurl=$url --cost=100"
+    }
   done
 )
 rootpw --iscrypted \$1\$yYAFxwuK\$EWLgSC/LSPvOrGR8hqjr9/
@@ -203,12 +219,13 @@ vmInstall() {
   [[ $cpus%2 -ne 0 ]] && let cpus--
   [[ $cpus -le 0 ]] && cpus=1
   vmDestroy "$name"
+  vmRemove "$name"
   virsh net-start default
   virt_install_opts="--name '$name'"
   virt_install_opts+=" --vcpus $cpus"
   virt_install_opts+=" --memory 2048"
   virt_install_opts+=" --disk size=30 --check disk_size=off"
-  virt_install_opts+=" --location $(echo "$vmRepos" | head -n 1 | cut -d ' ' -f 1)"
+  virt_install_opts+=" --location $(echo "$vmRepos" | head -n 1 | cut -d ' ' -f 1 | tr -d ';')"
   virt_install_opts+=" --extra-args 'inst.ks=file:/$ks quiet=0 console=ttyS0,115200'"
   virt_install_opts+=" --wait 90"
   virt_install_opts+=" --initrd-inject '$ks'"

@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = vmCentOS
-#   library-version = 1
+#   library-version = 2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_vm_LIB_NAME="vm/CentOS"
-__INTERNAL_vm_LIB_VERSION=1
+__INTERNAL_vm_LIB_VERSION=2
 
 : <<'=cut'
 =pod
@@ -56,13 +56,13 @@ vmCentOSGetRepos() {
 
   case $major in
     8)
-      ( cat - | sed -r 's/^\s*//;s/\s+/ /g;s/\s*$//' | sed -r 's/(\S+)\s+(\S+)\s+(\S+)/\3 \1 \2/' )<<EOF
+      ( cat - | sed -r 's/^\s*//;s/\s+/ /g;s/\s*$//' | sed -r 's/(\S+)\s+(\S+)\s+(\S+)/\3; \1; \2/' )<<EOF
         CentOS-$major-BaseOS     CentOS-$major-BaseOS     http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/
         CentOS-$major-AppStream  CentOS-$major-AppStream  http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/
 EOF
       ;;
     9)
-      ( cat - | sed -r 's/^\s*//;s/\s+/ /g;s/\s*$//' | sed -r 's/(\S+)\s+(\S+)\s+(\S+)/\3 \1 \2/' )<<EOF
+      ( cat - | sed -r 's/^\s*//;s/\s+/ /g;s/\s*$//' | sed -r 's/(\S+)\s+(\S+)\s+(\S+)/\3; \1; \2/' )<<EOF
         CentOS-$major-BaseOS     CentOS-$major-BaseOS     https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/
         CentOS-$major-AppStream  CentOS-$major-AppStream  https://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/
         CentOS-$major-CRB        CentOS-$major-CRB        https://mirror.stream.centos.org/9-stream/CRB/x86_64/os/
