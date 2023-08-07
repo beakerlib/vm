@@ -24,10 +24,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = vmFedora
-#   library-version = 1
+#   library-version = 2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_vm_LIB_NAME="vm/Fedora"
-__INTERNAL_vm_LIB_VERSION=1
+__INTERNAL_vm_LIB_VERSION=2
 
 : <<'=cut'
 =pod
@@ -49,7 +49,7 @@ echo -n "loading library $__INTERNAL_vm_LIB_NAME v$__INTERNAL_vm_LIB_VERSION... 
 
 vmFedoraGetRepos() {
   local major minor nightly
-  [[ "${1,,}" =~ ([0-9]+|rawhide) ]] || return 1
+  [[ "${1,,}" =~ fedora-?([0-9]+|rawhide) ]] || return 1
   major=${BASH_REMATCH[1]}
 
   case $major in
