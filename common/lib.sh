@@ -171,6 +171,16 @@ vmDestroy() {
 
 
 vmRemove() {
+  local line
+  virsh snapshot-list "$1" \
+    | grep -A 1000 -- --- \
+      | tail -n +2 \
+        | sed -r 's/^\s+//;s/(\s+\S+){4}$//' \
+          | while read -r line; do
+            [[ -n "$line" ]] && {
+              virsh snapshot-delete "$1" "$line"
+            }
+          done
   virsh undefine "$1" --remove-all-storage
 }
 
