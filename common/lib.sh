@@ -26,10 +26,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = vm
-#   library-version = 2
+#   library-version = 3
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_vm_LIB_NAME="vm/common"
-__INTERNAL_vm_LIB_VERSION=2
+__INTERNAL_vm_LIB_VERSION=3
 
 : <<'=cut'
 =pod
@@ -172,6 +172,16 @@ vmDestroy() {
 
 vmRemove() {
   virsh undefine "$1" --remove-all-storage
+}
+
+
+vmSnapshotCreate() {
+  virsh snapshot-create-as "$1" "$2"
+}
+
+
+vmSnapshotRevert() {
+  virsh snapshot-revert "$1" "$2"
 }
 
 
