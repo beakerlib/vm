@@ -26,10 +26,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   library-prefix = vm
-#   library-version = 5
+#   library-version = 6
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 __INTERNAL_vm_LIB_NAME="vm/common"
-__INTERNAL_vm_LIB_VERSION=5
+__INTERNAL_vm_LIB_VERSION=6
 
 : <<'=cut'
 =pod
@@ -73,56 +73,62 @@ vmGetRepos() {
   done < <(declare -F)
 }
 
+__vm_repo_fields=6 __vm_url=0 __vm_section=1 __vm_name=2 __vm_priority=3 __vm_metalink=4 __vm_enabled=5
 
 vmGetCurrentRepos() {
-  local section url enabled name priority
+  local line i tmp j
+  let i=-__vm_repo_fields
+  tmp=()
   while read -r line; do
     [[ "$line" =~ ^\[([^]]+)\] ]] && {
-      unset url name enabled
-      section="${BASH_REMATCH[1]}"
+      let i+=__vm_repo_fields
+      tmp[i+__vm_section]="${BASH_REMATCH[1]}"
     }
-    [[ -n "$section" ]] && {
-      [[ "$line" =~ ^baseurl=(.*)$ ]] && url=${BASH_REMATCH[1]}
-      [[ "$line" =~ ^name=(.*)$ ]] && name=${BASH_REMATCH[1]}
-      [[ "$line" =~ ^enabled=(.*)$ ]] && enabled=${BASH_REMATCH[1]}
-      [[ -n "$url" && -n "$name" && -n "$enabled" ]] && {
-        echo -e "$url;  ${section};  ${name};  ;  ${enabled}"
-        unset section
-      }
+    [[ -n "${tmp[i+__vm_section]}" ]] && {
+      [[ "$line" =~ ^baseurl=(.*)$ ]] && tmp[i+__vm_url]=${BASH_REMATCH[1]}
+      [[ "$line" =~ ^name=(.*)$ ]] && tmp[i+__vm_name]=${BASH_REMATCH[1]}
+      [[ "$line" =~ ^enabled=(.*)$ ]] && tmp[i+__vm_enabled]=${BASH_REMATCH[1]}
+      [[ "$line" =~ ^priority=(.*)$ ]] && tmp[i+__vm_priority]=${BASH_REMATCH[1]}
+      [[ "$line" =~ ^metalink=(.*)$ ]] && tmp[i+__vm_metalink]=${BASH_REMATCH[1]}
     }
   done < <(cat /etc/yum.repos.d/*.repo)
+  for (( ; i>=0; i-=__vm_repo_fields )); do
+    line=''
+    for (( j=0; j<__vm_repo_fields; j++ )); do
+      line+="${tmp[i+j]};"
+    done
+    echo "${line:0:-1}"
+  done
 }
 
 
 vmGenerateRepoFileSection() {
   local number=$(cat $BEAKERLIB_DIR/vmGenerateRepo_number 2>/dev/null)
-  local url section reponame priority enabled line re
+  local line tmp i
 
   while read -r line; do
-    re=$'^\s*([^;]+);\s*([^;]+);\s*([^;]+)(;\s*([^;]*)(;\s*([^;]*))?)?$'
-    [[ "$line" =~ $re ]] && {
-      url="${BASH_REMATCH[1]}"
-      section="${BASH_REMATCH[2]}"
-      reponame="${BASH_REMATCH[3]}"
-      priority="${BASH_REMATCH[5]}"
-      enabled="${BASH_REMATCH[7]}"
-      let number++
-      [[ -z "$enabled" ]] && enabled=1
-      echo "[${number}_${section}]
-name=${number}: ${reponame}
-baseurl=$url
+    # parse a ;-separated text into an array
+    IFS=';' tmp=( $line )
+    # strip leading and trailing spaces
+    for (( i=0; i<${#tmp[@]}; i++ )); do [[ ${tmp[i]} =~ ^[[:space:]]*(.*[^[:space:]])[[:space:]]*$ ]] && tmp[i]=${BASH_REMATCH[1]}; done
+    let number++
+    echo "[${number}_${tmp[__vm_section]}]
+name=${number}: ${tmp[__vm_name]}
+${tmp[url]:+"baseurl=${tmp[__vm_url]}"}
+${tmp[__vm_metalink]:+"metalink=${tmp[__vm_metalink]}"}
 gpgcheck=0
 sslverify=0
-enabled=$enabled
-skip_if_unavailable=1${priority:+$'\n'"priority=$priority"}
+enabled=${tmp[__vm_enabled]:-1}
+skip_if_unavailable=1
+${tmp[__vm_priority]:+"priority=${tmp[__vm_priority]}"}
+
 "
-    }
   done
   echo $number > $BEAKERLIB_DIR/vmGenerateRepo_number
 }
 
 
-vmRepos="https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/  fedora-rawhide"
+vmRepos="https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/"
 
 
 vmPrepareKs() {
@@ -130,19 +136,16 @@ vmPrepareKs() {
   local ks="$name.ks"
   cat > $ks <<EOKS
 firewall --disabled
-url                          --url="$(echo "$vmRepos" | head -n 1 | cut -d ' ' -f 1 | tr -d ';')"
+url                          --url="$(echo "$vmRepos" | head -n 1 | cut -d ';' -f 1 | tr -d ' ')"
 $(echo "$vmRepos" | \
   while read -r line; do
-    re=$'^\s*([^;]+);\s*([^;]+);\s*([^;]+)(;\s*([^;]+)(;\s*([^;]+))?)?$'
-    [[ "$line" =~ $re ]] && {
-      url="${BASH_REMATCH[1]}"
-      section="${BASH_REMATCH[2]}"
-      reponame=$(echo "${BASH_REMATCH[3]}")
-      priority="${BASH_REMATCH[5]}"
-      enabled="${BASH_REMATCH[7]}"
-      [[ -z "$enabled" || "$enabled" == "1" || "${enabled,,}" == "true" ]] \
-        && echo "repo --name=\"$section\"      --baseurl=$url --cost=100"
-    }
+    # parse a ;-separated text into an array
+    IFS=';' tmp=( $line )
+    # strip leading and trailing spaces
+    for (( i=0; i<${#tmp[@]}; i++ )); do [[ ${tmp[i]} =~ ^[[:space:]]*(.*[^[:space:]])[[:space:]]*$ ]] && tmp[i]=${BASH_REMATCH[1]}; done
+    let i++
+    [[ -z "${tmp[__vm_enabled]}" || "${tmp[__vm_enabled]}" == "1" || "${tmp[__vm_enabled],,}" == "true" ]] \
+      && [[ -n "${tmp[__vm_url]}" ]] && echo "repo --name=\"${tmp[__vm_section]:-$i}\"      --baseurl=${tmp[__vm_url]} --cost=${tmp[__vm_priority]:-100}"
   done
 )
 rootpw --iscrypted \$1\$yYAFxwuK\$EWLgSC/LSPvOrGR8hqjr9/
@@ -162,7 +165,7 @@ clearpart --all --initlabel
 autopart --type=lvm
 
 %post
-cat >/etc/yum.repos.d/repos.repo <<EOF
+cat >/etc/yum.repos.d/repos.repo <<'EOF'
 $( echo "$vmRepos" | vmGenerateRepoFileSection )
 EOF
 chmod -R 500 /root/.ssh
@@ -225,7 +228,7 @@ vmInstall() {
   virt_install_opts+=" --vcpus $cpus"
   virt_install_opts+=" --memory 2048"
   virt_install_opts+=" --disk size=30 --check disk_size=off"
-  virt_install_opts+=" --location $(echo "$vmRepos" | head -n 1 | cut -d ' ' -f 1 | tr -d ';')"
+  virt_install_opts+=" --location $(echo "$vmRepos" | head -n 1 | cut -d ';' -f 1 | tr -d ' ')"
   virt_install_opts+=" --extra-args 'inst.ks=file:/$ks quiet=0 console=ttyS0,115200'"
   virt_install_opts+=" --wait 90"
   virt_install_opts+=" --initrd-inject '$ks'"
